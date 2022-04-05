@@ -86,6 +86,8 @@ class Sorter():
                         sys.exit()
                     if event.key == pygame.K_1:
                         algorithms['bubble sort'] = True
+                    if event.key == pygame.K_2:
+                        array = self.insertion_sort(array)
 
             mx, my = pygame.mouse.get_pos()
 
@@ -117,6 +119,19 @@ class Sorter():
         else:
             self.finished = True
         return i, j
+        
+    def insertion_sort(self, array):
+        arr = array
+        for i in range(1, len(arr)):
+            key = arr[i]
+
+            j = i-1
+            while j >= 0 and key < arr[j] :
+                    arr[j + 1] = arr[j]
+                    j -= 1
+                    arr[j + 1] = key
+
+        return arr
 
 if __name__ == "__main__":
     sorter = Sorter(200)
