@@ -38,7 +38,7 @@ class Sorter():
         self.height = 800
         self.screen = pygame.display.set_mode((self.screen_width,
         self.height))
-        self.gap_size = 1
+        self.gap_size = 2
         icon = pygame.image.load('icon.png')
         pygame.display.set_icon(icon)
 
@@ -59,6 +59,7 @@ class Sorter():
         self.bubble_button = Button(self.screen, "bubble sort",
         [self.width + 10, 10])
         self.insertion_button = Button(self.screen, "insertion sort", [self.width + 10, 30])
+        self.reset_button = Button(self.screen, "reset", [self.width + 10, self.height - 25])
 
         self.algorithms = {
             'bubble sort': False,
@@ -68,7 +69,8 @@ class Sorter():
         self.count = 0
 
         self.buttons = [self.bubble_button,
-                   self.insertion_button]
+                        self.insertion_button,
+                        self.reset_button]
 
         self.hovering = False
 
@@ -154,6 +156,8 @@ class Sorter():
                             self.algorithms['insertion sort'] = True
                         elif self.finished:
                             self.reset()
+                        if self.buttons[2].rect.collidepoint(mouse_pos):
+                            self.reset()
 
 
             mouse_pos = pygame.mouse.get_pos()
@@ -178,6 +182,7 @@ class Sorter():
 
             bubble_rect = self.bubble_button.display()
             insertion_rect = self.insertion_button.display()
+            reset_rect = self.reset_button.display()
 
             # Sidebar Buttons
             insertion_rect = self.insertion_button.display()
