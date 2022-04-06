@@ -6,5 +6,3 @@ def display_text(surface, text, location, size):
     text = font.render(text, True, 'white')
     text_rect = text.get_rect()
     surface.blit(text, location)
-
-    return text_rect

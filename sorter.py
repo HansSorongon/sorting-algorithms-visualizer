@@ -10,16 +10,17 @@ class Button():
 
         self.surface = surface
         self.font = pygame.font.Font('pixel_font.ttf', 12)
+        self.raw_text = text
         self.text = self.font.render(text, True, 'white')
-        text_rect = self.text.get_rect()
-        self.rect = pygame.Rect(location[0], location[1], text_rect[2],
-        text_rect[3]) # uniform size
+        self.text_rect = self.text.get_rect()
+        self.rect = pygame.Rect(location[0], location[1], self.text_rect[2],
+        self.text_rect[3]) # uniform size
+        self.hovering = False
 
         self.location = location
 
     def display(self):
         self.surface.blit(self.text, self.location)
-        return self.rect
 
 class Sorter():
 
@@ -37,12 +38,16 @@ class Sorter():
         self.height = 800
         self.screen = pygame.display.set_mode((self.screen_width,
         self.height))
-        self.gap_size = 2
+        self.gap_size = 1
+        icon = pygame.image.load('icon.png')
+        pygame.display.set_icon(icon)
 
         self.finished = False
         # self.color_speed = math.ceil(int((self.width / n) / 2))
         self.color_speed = 10
         self.n = n
+
+        self.array = self.generate_array()
 
         self.colors = []
         self.color_index = 0
@@ -61,6 +66,11 @@ class Sorter():
         }
 
         self.count = 0
+
+        self.buttons = [self.bubble_button,
+                   self.insertion_button]
+
+        self.hovering = False
 
     def generate_array(self):
         array = []
@@ -86,25 +96,22 @@ class Sorter():
                 pygame.mixer.Sound.play(self.blip)
             self.color_count += 1
 
-    def check_hover(self, mouse_pos, hovering):
-        #!!! --- FOR REFACTORING --- !!!#
-        bubble_rect = self.bubble_button.display()
+    def check_hover(self, mouse_pos, buttons):
+        for button in buttons:
+            if button.rect.collidepoint(mouse_pos):
+                if not button.hovering:
+                    button.location[0] += 10
+                    button.hovering = True
+            else:
+                if button.hovering:
+                    button.location[0] -= 10
+                    button.hovering = False
 
-
-        if bubble_rect.collidepoint(mouse_pos):
-            if not hovering:
-                self.bubble_button.location[0] += 10
-                hovering = True # You are now currently hovering.
-        else:
-            if hovering:
-                self.bubble_button.location[0] -= 10
-                hovering = False
-        return hovering, bubble_rect
 
     def run(self):
 
         # Non-loop variables
-        array = self.generate_array()
+        # array = self.generate_array()
 
         for i in range(self.n):
             self.colors.append("white")
@@ -112,66 +119,75 @@ class Sorter():
         i = 0
         j = 0
 
-        key = array[i]
+        key = self.array[i]
 
         color_count = 0
 
-        algo_keys = list(self.algorithms)
-        hovering = False
 
         # MAIN LOOP ---------------------------------------------------
         while True:
 
             self.screen.fill("black")
 
-            self.display_array(self.gap_size, array, self.colors)
+            self.display_array(self.gap_size, self.array, self.colors)
 
             pygame.draw.rect(self.screen, 'white', (self.width, 0, 2,
             self.height))
 
+            # EVENT HANDLER
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     sys.exit()
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_q:
                         sys.exit()
-                    if event.key == pygame.K_i:
-                        self.algorithms['insertion sort'] = True
-                        i = 1
+                    if event.key == pygame.K_r:
+                        self.reset()
                 if event.type == pygame.MOUSEBUTTONDOWN:
                     if event.button == 1:
-                        if bubble_rect.collidepoint(mouse_pos):
+                        if self.buttons[0].rect.collidepoint(mouse_pos) and not self.finished:
                             self.algorithms['bubble sort'] = True
+                        elif self.finished:
+                            self.reset()
+                            self.algorithms['bubble sort'] = True # Automate running this with an optional class argument.
+                        if self.buttons[1].rect.collidepoint(mouse_pos) and not self.finished:
+                            self.algorithms['insertion sort'] = True
+                        elif self.finished:
+                            self.reset()
+
 
             mouse_pos = pygame.mouse.get_pos()
 
             if self.algorithms['bubble sort']:
                 self.colors[j] = 'white'
-                i, j= self.bubble_sort(i, j, array)
+                i, j= self.bubble_sort(i, j, self.array)
                 self.colors[j] = 'green'
             if self.algorithms['insertion sort']:
-                self.colors[j] = 'white'
+                self.colors[j+1] = 'white'
                 try:
-                    i, j = self.insertion_sort(i, j, array, key)
+                    i, j = self.insertion_sort(i, j, self.array, key)
+                    self.colors[j+1] = 'green'
                 except:
                     self.finished = True
                     self.algorithms['insertion sort'] = False
-                    self.clock.tick(0)
-                self.colors[j] = 'green'
 
             # Aesthetics
             self.color_array()
             af.display_text(self.screen, f"FPS: {int(self.clock.get_fps())}",
             (10, 10), 12)
 
+            bubble_rect = self.bubble_button.display()
+            insertion_rect = self.insertion_button.display()
+
             # Sidebar Buttons
             insertion_rect = self.insertion_button.display()
-            hovering, bubble_rect = self.check_hover(mouse_pos, hovering)
+            self.check_hover(mouse_pos, self.buttons)
 
             # Essentials
-            self.clock.tick(0)
+            self.clock.tick(0) # Control Frame Rate
             pygame.display.update()
 
+    # MAIN SORTING ALGORITHMS
     def bubble_sort(self, i, j, array):
         if i < self.n:
             if array[j] > array[j+1]:
@@ -188,31 +204,21 @@ class Sorter():
 
     def insertion_sort(self, i, j, array, key):
         if self.algorithms['insertion sort']:
-            self.clock.tick(30)
             arr = array
             for i in range(1, len(arr)):
                 key = arr[i]
                 j = i-1
                 while j >= 0 and key < arr[j]:
-
                         arr[j + 1] = arr[j]
                         pygame.mixer.Sound.play(self.blip)
                         j -= 1
                         arr[j + 1] = key
                         return i, j
 
-
-    # def insertion_sort(self, i, j, array, key):
-    #     if self.algorithms['insertion sort']:
-    #
-    #         if j >= 0 and key < array[j]:
-    #             array[j + 1] = array[j]
-    #             j -= 1
-    #             array[j + 1] = key
-    #         if i < len(array):
-    #             j = i - 1
-    #     return i, j
+    def reset(self):
+        sorter = Sorter(self.n)
+        sorter.run()
 
 if __name__ == "__main__":
-    sorter = Sorter(200)
+    sorter = Sorter(50)
     sorter.run()
