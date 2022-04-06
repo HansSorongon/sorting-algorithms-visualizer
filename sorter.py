@@ -188,7 +188,7 @@ class Sorter():
 
     def insertion_sort(self, i, j, array, key):
         if self.algorithms['insertion sort']:
-            self.clock.tick(60)
+            self.clock.tick(30)
             arr = array
             for i in range(1, len(arr)):
                 key = arr[i]
@@ -214,5 +214,5 @@ class Sorter():
     #     return i, j
 
 if __name__ == "__main__":
-    sorter = Sorter(50)
+    sorter = Sorter(200)
     sorter.run()
