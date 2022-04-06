@@ -9,7 +9,6 @@ class Button():
     def __init__(self, surface, text, location):
 
         self.surface = surface
-        self.size = (50, 25)
         self.font = pygame.font.Font('pixel_font.ttf', 12)
         self.text = self.font.render(text, True, 'white')
         text_rect = self.text.get_rect()
@@ -54,6 +53,14 @@ class Sorter():
 
         self.bubble_button = Button(self.screen, "bubble sort",
         [self.width + 10, 10])
+        self.insertion_button = Button(self.screen, "insertion sort", [self.width + 10, 30])
+
+        self.algorithms = {
+            'bubble sort': False,
+            'insertion sort': False,
+        }
+
+        self.count = 0
 
     def generate_array(self):
         array = []
@@ -80,7 +87,10 @@ class Sorter():
             self.color_count += 1
 
     def check_hover(self, mouse_pos, hovering):
+        #!!! --- FOR REFACTORING --- !!!#
         bubble_rect = self.bubble_button.display()
+
+
         if bubble_rect.collidepoint(mouse_pos):
             if not hovering:
                 self.bubble_button.location[0] += 10
@@ -93,6 +103,7 @@ class Sorter():
 
     def run(self):
 
+        # Non-loop variables
         array = self.generate_array()
 
         for i in range(self.n):
@@ -101,15 +112,13 @@ class Sorter():
         i = 0
         j = 0
 
+        key = array[i]
+
         color_count = 0
 
-        # Algorithm Dictionary
-        algorithms = {
-            'bubble sort': False,
-        }
-        algo_keys = list(algorithms)
-
+        algo_keys = list(self.algorithms)
         hovering = False
+
         # MAIN LOOP ---------------------------------------------------
         while True:
 
@@ -126,18 +135,28 @@ class Sorter():
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_q:
                         sys.exit()
-                    if event.key == pygame.K_2:
-                        array = self.insertion_sort(array)
+                    if event.key == pygame.K_i:
+                        self.algorithms['insertion sort'] = True
+                        i = 1
                 if event.type == pygame.MOUSEBUTTONDOWN:
                     if event.button == 1:
                         if bubble_rect.collidepoint(mouse_pos):
-                            algorithms['bubble sort'] = True
+                            self.algorithms['bubble sort'] = True
 
             mouse_pos = pygame.mouse.get_pos()
 
-            if algorithms['bubble sort']:
+            if self.algorithms['bubble sort']:
                 self.colors[j] = 'white'
                 i, j= self.bubble_sort(i, j, array)
+                self.colors[j] = 'green'
+            if self.algorithms['insertion sort']:
+                self.colors[j] = 'white'
+                try:
+                    i, j = self.insertion_sort(i, j, array, key)
+                except:
+                    self.finished = True
+                    self.algorithms['insertion sort'] = False
+                    self.clock.tick(0)
                 self.colors[j] = 'green'
 
             # Aesthetics
@@ -146,6 +165,7 @@ class Sorter():
             (10, 10), 12)
 
             # Sidebar Buttons
+            insertion_rect = self.insertion_button.display()
             hovering, bubble_rect = self.check_hover(mouse_pos, hovering)
 
             # Essentials
@@ -164,19 +184,34 @@ class Sorter():
                     i += 1
         else:
             self.finished = True
-        return i, j # i, j are used to display each specific iteration
+        return i, j
 
-    def insertion_sort(self, array):
-        arr = array
-        for i in range(1, len(arr)):
-            key = arr[i]
+    def insertion_sort(self, i, j, array, key):
+        if self.algorithms['insertion sort']:
+            self.clock.tick(60)
+            arr = array
+            for i in range(1, len(arr)):
+                key = arr[i]
+                j = i-1
+                while j >= 0 and key < arr[j]:
 
-            j = i-1
-            while j >= 0 and key < arr[j] :
-                    arr[j + 1] = arr[j]
-                    j -= 1
-                    arr[j + 1] = key
-        return arr
+                        arr[j + 1] = arr[j]
+                        pygame.mixer.Sound.play(self.blip)
+                        j -= 1
+                        arr[j + 1] = key
+                        return i, j
+
+
+    # def insertion_sort(self, i, j, array, key):
+    #     if self.algorithms['insertion sort']:
+    #
+    #         if j >= 0 and key < array[j]:
+    #             array[j + 1] = array[j]
+    #             j -= 1
+    #             array[j + 1] = key
+    #         if i < len(array):
+    #             j = i - 1
+    #     return i, j
 
 if __name__ == "__main__":
     sorter = Sorter(50)
