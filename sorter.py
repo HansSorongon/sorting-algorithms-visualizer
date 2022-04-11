@@ -60,12 +60,14 @@ class Sorter():
         [self.width + 10, 10])
         self.insertion_button = Button(self.screen, "insertion sort", [self.width + 10, 30])
         self.selection_button = Button(self.screen, "selection sort", [self.width + 10, 50])
+        self.merge_button = Button(self.screen, "merge sort", [self.width + 10, 70])
         self.reset_button = Button(self.screen, "reset", [self.width + 10, self.height - 25])
 
         self.algorithms = {
             'bubble sort': False,
             'insertion sort': False,
             'selection sort': False,
+            'merge sort': False,
         }
 
         self.count = 0
@@ -73,6 +75,7 @@ class Sorter():
         self.buttons = [self.bubble_button,
                         self.insertion_button,
                         self.selection_button,
+                        self.merge_button,
                         self.reset_button]
 
         self.hovering = False
@@ -95,6 +98,7 @@ class Sorter():
             pygame.draw.rect(self.screen, colors[i], properties)
 
     def color_array(self):
+
         if self.finished and self.color_count < self.n * self.color_speed:
             if self.color_count % self.color_speed == 0:
                 self.colors[int(self.color_count / self.color_speed) ] = 'green'
@@ -159,8 +163,10 @@ class Sorter():
                                     it = self.insertion_sort(self.array)
                                 if button.raw_text == "selection sort":
                                     it = self.selection_sort(self.array)
+                                if button.raw_text == "merge sort":
+                                    it = self.merge_sort(self.array)
                                 if button.raw_text == "reset":
-                                    it = self.reset()
+                                    self.reset()
 
             mouse_pos = pygame.mouse.get_pos()
 
@@ -176,7 +182,6 @@ class Sorter():
                 except StopIteration:
                     self.finished = True
                     self.algorithms['bubble sort'] = False
-
             if self.algorithms['insertion sort']:
                 self.colors[j] = 'white'
                 self.colors[i] = 'white'
@@ -199,7 +204,15 @@ class Sorter():
                     self.clock.tick(60)
                     self.finished = True
                     self.algorithms['selection sort'] = False
+            if self.algorithms['merge sort']:
+                try:
+                    self.clock.tick(80)
+                    a = next(it)
+                except StopIteration:
+                    self.clock.tick(60)
 
+                    self.finished = True
+                    self.algorithms['merge sort'] = False
 
             # Aesthetics
             self.color_array()
@@ -209,6 +222,7 @@ class Sorter():
             bubble_rect = self.bubble_button.display()
             insertion_rect = self.insertion_button.display()
             selection_rect = self.selection_button.display()
+            merge_rect = self.merge_button.display()
             reset_rect = self.reset_button.display()
 
             # Sidebar Buttons
@@ -252,10 +266,48 @@ class Sorter():
             array[i], array[min_idx] = array[min_idx], array[i]
             yield i, j
 
+    def merge_sort(self, array):
+        def merge_recursion(start, end):
+            if end - start > 1:
+                middle = (start + end) // 2
+
+                yield from merge_recursion(start, middle)
+                yield from merge_recursion(middle, end)
+                left = array[start:middle]
+                right = array[middle:end]
+
+                a = 0
+                b = 0
+                c = start
+
+                while a < len(left) and b < len(right):
+                    if left[a] < right[b]:
+                        array[c] = left[a]
+                        pygame.mixer.Sound.play(self.blip)
+                        a += 1
+                    else:
+                        array[c] = right[b]
+                        b += 1
+                    c += 1
+                while a < len(left):
+                    array[c] = left[a]
+                    pygame.mixer.Sound.play(self.blip)
+                    a += 1
+                    c += 1
+                while b < len(right):
+                    array[c] = right[b]
+                    pygame.mixer.Sound.play(self.blip)
+                    b += 1
+                    c += 1
+                yield a, b, c
+            yield array
+        yield from merge_recursion(0, len(array))
+
+
     def reset(self):
         sorter = Sorter(self.n)
         sorter.run()
 
 if __name__ == "__main__":
-    sorter = Sorter(100)
+    sorter = Sorter(300)
     sorter.run()
