@@ -44,7 +44,7 @@ class Sorter():
 
         self.finished = False
         # self.color_speed = math.ceil(int((self.width / n) / 2))
-        self.color_speed = 1
+        self.color_speed = 5
         self.n = n
 
         self.array = self.generate_array()
@@ -189,7 +189,7 @@ class Sorter():
                     i, j = next(it)
                     self.colors[i] = 'red'
                     self.colors[j] = 'green'
-                except:
+                except StopIteration:
                     self.finished = True
                     self.algorithms['insertion sort'] = False
             if self.algorithms['selection sort']:
@@ -210,7 +210,6 @@ class Sorter():
                     a = next(it)
                 except StopIteration:
                     self.clock.tick(60)
-
                     self.finished = True
                     self.algorithms['merge sort'] = False
 
@@ -230,7 +229,7 @@ class Sorter():
             self.check_hover(mouse_pos, self.buttons)
 
             # Essentials
-            self.clock.tick(60)
+            self.clock.tick(0)
             pygame.display.update()
 
     # MAIN SORTING ALGORITHMS
@@ -309,5 +308,5 @@ class Sorter():
         sorter.run()
 
 if __name__ == "__main__":
-    sorter = Sorter(300)
+    sorter = Sorter(100)
     sorter.run()
