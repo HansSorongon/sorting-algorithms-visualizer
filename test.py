@@ -1,43 +1,25 @@
-array = [12, 11, 13, 5, 6, 7]
 
+def quicksort(arr, start, end):
 
+    if (end <= start):
+        return
 
+    pivot = arr[end]
+    i = start - 1
 
-
-
-def merge_sort(array):
-    if len(array) > 1:
-
-        mid = len(array) // 2
-
-        L = array[:mid]
-        R = array[mid:]
-
-        merge_sort(L)
-        merge_sort(R)
-
-        i = j = k = 0
-
-        while i < len(L) and j < len(R):
-            if L[i] < R[j]:
-                array[k] = L[i]
-                i += 1
-            else:
-                array[k] = R[j]
-                j += 1
-            k += 1
-
-        # Checking if any element was left
-        while i < len(L):
-            array[k] = L[i]
+    for j in range(start, end):
+        if (arr[j] < pivot):
             i += 1
-            k += 1
+            arr[i], arr[j] = arr[j], arr[i]
 
-        while j < len(R):
-            array[k] = R[j]
-            j += 1
-            k += 1
-        yield i, j, k
+    i += 1
+    arr[i], arr[end] = arr[end], arr[i]
 
-it = merge_sort(array)
-i, j, k = next(it)
+    quicksort(arr, start, i - 1)
+    quicksort(arr, i + 1, end)
+
+arr = [5, 3, 1, 2, 4]
+quicksort(arr, 0, len(arr) - 1)
+
+print(arr)
+

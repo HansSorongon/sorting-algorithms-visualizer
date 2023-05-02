@@ -58,9 +58,22 @@ class Sorter():
 
         self.bubble_button = Button(self.screen, "bubble sort",
         [self.width + 10, 10])
-        self.insertion_button = Button(self.screen, "insertion sort", [self.width + 10, 30])
-        self.selection_button = Button(self.screen, "selection sort", [self.width + 10, 50])
-        self.merge_button = Button(self.screen, "merge sort", [self.width + 10, 70])
+        self.insertion_button = Button(self.screen, "insertion sort",
+                                       [self.width + 10, 35])
+        self.selection_button = Button(self.screen, "selection sort",
+                                       [self.width + 10, 60])
+        self.merge_button = Button(self.screen, "merge sort", [self.width + 10,
+                                                               85])
+        self.bogosort_button = Button(self.screen, "bogosort", [self.width +
+                                                                10, 110])
+        self.quicksort_button = Button(self.screen, "quicksort", [self.width +
+                                                                  10, 135])
+        self.cocktail_sort_button = Button(self.screen, "cocktail sort",
+                                           [self.width + 10, 160])
+
+
+        self.three_hundred = Button(self.screen, "300 Elements", [self.width + 10,
+                                                         self.height - 50])
         self.reset_button = Button(self.screen, "reset", [self.width + 10, self.height - 25])
 
         self.algorithms = {
@@ -68,22 +81,41 @@ class Sorter():
             'insertion sort': False,
             'selection sort': False,
             'merge sort': False,
+            'bogosort': False,
+            'quicksort': False,
+            'cocktail sort': False
         }
 
         self.count = 0
 
-        self.buttons = [self.bubble_button,
+        self.buttons = [
+                        self.bubble_button,
                         self.insertion_button,
                         self.selection_button,
                         self.merge_button,
-                        self.reset_button]
+                        self.bogosort_button,
+                        self.quicksort_button,
+                        self.cocktail_sort_button,
+
+                        self.three_hundred,
+                        self.reset_button
+                       ]
 
         self.hovering = False
 
     def generate_array(self):
         array = []
+        # for i in range(self.n):
+        #     array.append(random.randint(1, self.height - 100))
+
+        # some constant the average of each bar
+        constant = (self.height - 100) // self.n
+
         for i in range(self.n):
-            array.append(random.randint(1, self.height - 100))
+            array.append(i * constant)
+
+        random.shuffle(array)
+
         return array
 
     def display_array(self, gap_size, array, colors):
@@ -151,12 +183,14 @@ class Sorter():
                     if event.key == pygame.K_r:
                         self.reset()
                     if event.key == pygame.K_s:
-                        it = self.selection_sort(self.array)
+                        self.algorithms['cocktail sort'] = True
                 if event.type == pygame.MOUSEBUTTONDOWN:
                     if event.button == 1:
                         for button in self.buttons:
-                            if button.rect.collidepoint(mouse_pos) and not self.finished:
+                            if button.rect.collidepoint(mouse_pos):
+
                                 self.algorithms[button.raw_text] = True
+
                                 if button.raw_text == "bubble sort":
                                     it = self.bubble_sort(self.array)
                                 if button.raw_text == "insertion sort":
@@ -165,6 +199,16 @@ class Sorter():
                                     it = self.selection_sort(self.array)
                                 if button.raw_text == "merge sort":
                                     it = self.merge_sort(self.array)
+                                if button.raw_text == "bogosort":
+                                    it = self.bogosort(self.array)
+                                if button.raw_text == "quicksort":
+                                    it = self.quicksort(self.array, 0, len(self.array) - 1)
+                                if button.raw_text == "cocktail sort":
+                                    it = self.cocktail_sort(self.array)
+
+                                if button.raw_text == "300 Elements":
+                                    self.n = 300
+                                    self.reset()
                                 if button.raw_text == "reset":
                                     self.reset()
 
@@ -199,29 +243,67 @@ class Sorter():
                     self.clock.tick(20)
                     i, min_idx = next(it)
                     self.colors[i] = 'red'
-                    self.colors[j] = 'green'
+                    self.colors[min_idx] = 'green'
                 except StopIteration:
                     self.clock.tick(60)
                     self.finished = True
                     self.algorithms['selection sort'] = False
             if self.algorithms['merge sort']:
+                self.colors[i] = 'white'
+                self.colors[j - 1] = 'white'
+                try:
+                    self.clock.tick(80)
+                    i, j = next(it)
+                    self.colors[i] = 'red'
+                    self.colors[j - 1] = 'green'
+                except StopIteration:
+                    self.clock.tick(60)
+                    self.finished = True
+                    self.algorithms['merge sort'] = False
+            if self.algorithms['bogosort']:
                 try:
                     self.clock.tick(80)
                     a = next(it)
                 except StopIteration:
                     self.clock.tick(60)
                     self.finished = True
-                    self.algorithms['merge sort'] = False
+                    self.algorithms['bogosort'] = False
+            if self.algorithms['quicksort']:
+                self.colors[i] = 'white'
+                try:
+                    self.clock.tick(40)
+                    i = next(it)
+                    self.colors[i] = 'red'
+                except StopIteration:
+                    self.clock.tick(60)
+                    self.finished = True
+                    self.algorithms['quicksort'] = False
+            if self.algorithms['cocktail sort']:
+                self.colors[i + 1] = 'white'
+                try:
+                    self.clock.tick(500)
+                    i = next(it)
+                    self.colors[i + 1] = 'red'
+                except StopIteration:
+                    self.clock.tick(60)
+                    self.finished = True
+                    self.algorithms['cocktail sort'] = False
+
 
             # Aesthetics
             self.color_array()
-            af.display_text(self.screen, f"FPS: {int(self.clock.get_fps())}",
-            (10, 10), 12)
+            # af.display_text(self.screen, f"FPS: {int(self.clock.get_fps())}",
+            # (10, 10), 12)
 
             bubble_rect = self.bubble_button.display()
             insertion_rect = self.insertion_button.display()
             selection_rect = self.selection_button.display()
             merge_rect = self.merge_button.display()
+            bogosort_rect = self.bogosort_button.display()
+            quicksort_rect = self.quicksort_button.display()
+            cocktail_rect = self.cocktail_sort_button.display()
+
+            three_hundred_rect = self.three_hundred.display()
             reset_rect = self.reset_button.display()
 
             # Sidebar Buttons
@@ -263,9 +345,11 @@ class Sorter():
                     min_idx = j
                     pygame.mixer.Sound.play(self.blip)
             array[i], array[min_idx] = array[min_idx], array[i]
-            yield i, j
+            yield i, min_idx
 
     def merge_sort(self, array):
+
+        # it's recursive so we define inside
         def merge_recursion(start, end):
             if end - start > 1:
                 middle = (start + end) // 2
@@ -298,15 +382,78 @@ class Sorter():
                     pygame.mixer.Sound.play(self.blip)
                     b += 1
                     c += 1
-                yield a, b, c
-            yield array
+            yield start, end
         yield from merge_recursion(0, len(array))
 
+    def bogosort(self, array):
+
+        def is_sorted(data):
+            return all(a <= b for a, b in zip(data, data[1:]))
+
+        while not is_sorted(array):
+            random.shuffle(array)
+            pygame.mixer.Sound.play(self.blip)
+            yield array
+
+    def quicksort(self, array, start, end):
+
+        def quicksort_recursion(arr, start, end):
+
+            if (end <= start):
+                return
+
+            pivot = arr[end]
+            i = start - 1
+
+            for j in range(start, end):
+                if (arr[j] < pivot):
+                    i += 1
+                    arr[i], arr[j] = arr[j], arr[i]
+
+            i += 1
+            arr[i], arr[end] = arr[end], arr[i]
+
+            yield i # pivot
+            pygame.mixer.Sound.play(self.blip)
+
+            yield from quicksort_recursion(arr, start, i - 1)
+            yield from quicksort_recursion(arr, i + 1, end)
+        yield from quicksort_recursion(array, 0, len(array) - 1)
+
+    def cocktail_sort(self, array):
+        n = len(array)
+        swapped = True
+        start = 0
+        end = n - 1
+
+        while (swapped == True):
+            swapped = False
+
+            for i in range(start, end):
+                if (array[i] > array[i + 1]):
+                    array[i], array[i + 1] = array[i + 1], array[i]
+                    swapped = True
+                    pygame.mixer.Sound.play(self.blip)
+                    yield i
+
+            if (swapped == False):
+                break
+            swapped = False
+
+            end = end - 1
+
+            for i in range(end - 1, start - 1, -1):
+                if (array[i] > array[i + 1]):
+                    array[i], array[i + 1] = array[i + 1], array[i]
+                    swapped = True
+                    pygame.mixer.Sound.play(self.blip)
+                    yield i
+            start = start + 1
 
     def reset(self):
         sorter = Sorter(self.n)
         sorter.run()
 
 if __name__ == "__main__":
-    sorter = Sorter(100)
+    sorter = Sorter(200)
     sorter.run()
