@@ -22,9 +22,39 @@ class Button():
     def display(self):
         self.surface.blit(self.text, self.location)
 
+class InputBox():
+
+    def __init__(self, surface, text, location):
+
+        self.location = location
+        self.surface = surface
+
+        self.font = pygame.font.Font("pixel_font.ttf", 12)
+        self.raw_text = text
+        self.text = self.font.render(text, True, 'black')
+
+        self.text_rect = self.text.get_rect()
+
+        # self.font = pygame.font.Font('pixel_font.ttf', 12)
+        # self.raw_text = text
+        # self.text = self.font.render(text, True, 'black')
+
+        # self.rect = pygame.Rect(location[0], location[1], 30, 25)
+        self.surf = pygame.Surface((50, 30))
+        self.surf.fill('white')
+
+        self.box_rect = self.surf.get_rect()
+        self.rect = pygame.Rect(location[0], location[1], self.box_rect[2],
+                                self.box_rect[3])
+
+    def display(self):
+        self.surface.blit(self.surf, self.location)
+        self.surface.blit(self.text, [self.location[0], self.location[1] + 10])
+
 class Sorter():
 
     def __init__(self, n):
+
 
         pygame.init()
         pygame.mixer.init()
@@ -38,7 +68,7 @@ class Sorter():
         self.height = 800
         self.screen = pygame.display.set_mode((self.screen_width,
         self.height))
-        self.gap_size = 2
+        self.gap_size = 1
         icon = pygame.image.load('icon.png')
         pygame.display.set_icon(icon)
 
@@ -56,6 +86,11 @@ class Sorter():
         self.blip = pygame.mixer.Sound('blip.wav')
         self.blip.set_volume(0.1)
 
+        self.input_active = False
+
+        self.n_text = str(self.n)
+
+        # Buttons
         self.bubble_button = Button(self.screen, "bubble sort",
         [self.width + 10, 10])
         self.insertion_button = Button(self.screen, "insertion sort",
@@ -70,11 +105,12 @@ class Sorter():
                                                                   10, 135])
         self.cocktail_sort_button = Button(self.screen, "cocktail sort",
                                            [self.width + 10, 160])
+        self.shell_sort_button = Button(self.screen, "shell sort", [self.width
+                                                                    + 10, 185])
 
-
-        self.three_hundred = Button(self.screen, "300 Elements", [self.width + 10,
-                                                         self.height - 50])
+        self.input_box = InputBox(self.screen, self.n_text,[self.width + 10, self.height - 60])
         self.reset_button = Button(self.screen, "reset", [self.width + 10, self.height - 25])
+
 
         self.algorithms = {
             'bubble sort': False,
@@ -83,7 +119,8 @@ class Sorter():
             'merge sort': False,
             'bogosort': False,
             'quicksort': False,
-            'cocktail sort': False
+            'cocktail sort': False,
+            'shell sort': False
         }
 
         self.count = 0
@@ -96,8 +133,8 @@ class Sorter():
                         self.bogosort_button,
                         self.quicksort_button,
                         self.cocktail_sort_button,
+                        self.shell_sort_button,
 
-                        self.three_hundred,
                         self.reset_button
                        ]
 
@@ -178,12 +215,31 @@ class Sorter():
                 if event.type == pygame.QUIT:
                     sys.exit()
                 if event.type == pygame.KEYDOWN:
+
                     if event.key == pygame.K_q:
+                        print("Terminating...")
                         sys.exit()
-                    if event.key == pygame.K_r:
-                        self.reset()
+
                     if event.key == pygame.K_s:
-                        self.algorithms['cocktail sort'] = True
+                        self.algorithms['shell sort'] = True
+                        it = self.shell_sort(self.array)
+                    if self.input_active:
+                        if event.key == pygame.K_BACKSPACE:
+                            if len(self.n_text) > 0:
+                                self.n_text = self.n_text[:-1]
+                        else:
+                            if event.unicode.isdigit() and len(self.n_text) < 3:
+                                self.n_text += event.unicode
+
+                    if event.key == pygame.K_RETURN:
+                        if self.n_text:
+
+                            if (int(self.n_text) > 600):
+                                self.n_text = 600
+
+                            self.n = int(self.n_text)
+                            self.reset()
+
                 if event.type == pygame.MOUSEBUTTONDOWN:
                     if event.button == 1:
                         for button in self.buttons:
@@ -205,16 +261,21 @@ class Sorter():
                                     it = self.quicksort(self.array, 0, len(self.array) - 1)
                                 if button.raw_text == "cocktail sort":
                                     it = self.cocktail_sort(self.array)
-
-                                if button.raw_text == "300 Elements":
-                                    self.n = 300
-                                    self.reset()
+                                if button.raw_text == "shell sort":
+                                    it = self.shell_sort(self.array)
                                 if button.raw_text == "reset":
                                     self.reset()
 
+                        if self.input_box.rect.collidepoint(mouse_pos):
+                            self.input_active = True
+                        else:
+                            self.input_active = False
+
+
+            self.input_box = InputBox(self.screen, self.n_text,[self.width + 10, self.height - 60])
             mouse_pos = pygame.mouse.get_pos()
 
-            # Algorithm Iterations
+            # Algorithm Iterations; i can refactor this ik
             if self.algorithms['bubble sort']:
                 self.colors[j+1] = 'white'
                 self.colors[i] = 'white'
@@ -288,12 +349,24 @@ class Sorter():
                     self.clock.tick(60)
                     self.finished = True
                     self.algorithms['cocktail sort'] = False
-
+            if self.algorithms['shell sort']:
+                self.colors[i] = 'white'
+                self.colors[j] = 'white'
+                try:
+                    self.clock.tick(80)
+                    i, j = next(it)
+                    pygame.mixer.Sound.play(self.blip)
+                    self.colors[i] = 'green'
+                    self.colors[j] = 'red'
+                except StopIteration:
+                    self.clock.tick(60)
+                    self.finished = True
+                    self.algorithms['shell sort'] = False
 
             # Aesthetics
             self.color_array()
-            # af.display_text(self.screen, f"FPS: {int(self.clock.get_fps())}",
-            # (10, 10), 12)
+            af.display_text(self.screen, f"FPS: {int(self.clock.get_fps())}",
+            (10, 10), 12)
 
             bubble_rect = self.bubble_button.display()
             insertion_rect = self.insertion_button.display()
@@ -302,12 +375,25 @@ class Sorter():
             bogosort_rect = self.bogosort_button.display()
             quicksort_rect = self.quicksort_button.display()
             cocktail_rect = self.cocktail_sort_button.display()
+            insertion_rect = self.insertion_button.display()
+            shell_rect = self.shell_sort_button.display()
 
-            three_hundred_rect = self.three_hundred.display()
+            input_box_rect = self.input_box.display()
             reset_rect = self.reset_button.display()
 
+            # input box
+            af.display_text(self.screen, "elements:", (self.width + 10,
+                                                         self.height - 80), 12)
+            if (self.input_active and self.count > 180):
+                pygame.draw.rect(self.screen, 'black',
+                                 (self.width + self.input_box.text_rect[2] + 11, self.height
+                                                   - 57, 5, 25))
+            self.count += 1
+
+            if (self.count > 360):
+                self.count = 0
+
             # Sidebar Buttons
-            insertion_rect = self.insertion_button.display()
             self.check_hover(mouse_pos, self.buttons)
 
             # Essentials
@@ -450,10 +536,31 @@ class Sorter():
                     yield i
             start = start + 1
 
+    def shell_sort(self, array):
+        n = len(array)
+        gap = n // 2
+
+        while gap > 0:
+            j = gap
+
+            while j < n:
+                i = j - gap
+
+                while i >= 0:
+
+                    if array[i + gap] > array[i]:
+                        break
+                    else:
+                        array[i + gap], array[i] = array[i], array[i + gap]
+                    i = i - gap
+                    yield i, j
+                j += 1
+            gap = gap // 2
+
     def reset(self):
         sorter = Sorter(self.n)
         sorter.run()
 
 if __name__ == "__main__":
-    sorter = Sorter(200)
+    sorter = Sorter(100)
     sorter.run()
